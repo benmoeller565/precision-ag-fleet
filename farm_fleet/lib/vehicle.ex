@@ -27,6 +27,10 @@ defmodule FarmFleet.Vehicle do
     GenServer.cast(pid, :crash)
   end
 
+  def complete_task(pid) do
+    GenServer.cast(pid, :complete_task)
+  end
+
   # Server Callbacks
 
   @impl true
@@ -50,12 +54,14 @@ defmodule FarmFleet.Vehicle do
 
   @impl true
   def handle_cast({:assign_task, task}, state) do
-    updated_state =
+    Process.send_after(self(), :finish_task, 5_000)
+
+    new_state =
       state
       |> Map.put(:current_task, task)
       |> Map.put(:status, :working)
 
-    {:noreply, updated_state}
+    {:noreply, new_state}
   end
 
   @impl true
@@ -73,5 +79,25 @@ defmodule FarmFleet.Vehicle do
   @impl true
   def handle_cast(:crash, state) do
     raise "Vehicle #{state.id} simulated crash"
+  end
+
+  @impl true
+  def handle_cast(:complete_task, state) do
+    new_state =
+      state
+      |> Map.put(:status, :idle)
+      |> Map.put(:current_task, nil)
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info(:finish_task, state) do
+    new_state =
+      state
+      |> Map.put(:status, :idle)
+      |> Map.put(:current_task, nil)
+
+    {:noreply, new_state}
   end
 end

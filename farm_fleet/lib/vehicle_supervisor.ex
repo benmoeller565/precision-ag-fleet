@@ -20,4 +20,16 @@ defmodule FarmFleet.VehicleSupervisor do
       child_spec
     )
   end
+
+  def get_vehicles do
+    DynamicSupervisor.which_children(__MODULE__)
+  end
+
+  
+  def get_vehicle_states do
+    DynamicSupervisor.which_children(__MODULE__)
+    |> Enum.map(fn {_id, pid, _type, _modules} ->
+      {pid, FarmFleet.Vehicle.get_state(pid)}
+    end)
+  end
 end
