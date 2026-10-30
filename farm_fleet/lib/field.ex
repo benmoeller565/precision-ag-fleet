@@ -1,7 +1,9 @@
 defmodule FarmFleet.Field do
   defstruct [
     :id,
+    :name,
     :location,
-    :size
+    :task_queue
   ]
 end
+

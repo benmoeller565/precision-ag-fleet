@@ -1,19 +1,22 @@
 defmodule FarmFleet.Dispatcher do
-  def assign_task(task) do
-    vehicles =
-      FarmFleet.VehicleSupervisor.get_vehicles()
+  defp distance({x1, y1}, {x2, y2}) do
+    abs(x1 - x2) + abs(y1 - y2)
+  end
 
+  def assign_task(task) do
     available_vehicle =
-      vehicles
+      FarmFleet.VehicleSupervisor.get_vehicles()
       |> Enum.map(fn {_id, pid, _type, _modules} ->
         {pid, FarmFleet.Vehicle.get_state(pid)}
       end)
       |> Enum.filter(fn {_pid, state} ->
         state.status == :idle &&
-        state.battery > 20
+          state.battery > 20
       end)
-      |> Enum.max_by(
-        fn {_pid, state} -> state.battery end,
+      |> Enum.min_by(
+        fn {_pid, state} ->
+          distance(state.position, task.location)
+        end,
         fn -> nil end
       )
 
