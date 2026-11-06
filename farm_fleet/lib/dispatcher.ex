@@ -3,6 +3,10 @@ defmodule FarmFleet.Dispatcher do
     abs(x1 - x2) + abs(y1 - y2)
   end
 
+  defp can_perform?(state, task) do
+    task.type in state.capabilities
+  end
+
   def assign_task(task) do
     available_vehicle =
       FarmFleet.VehicleSupervisor.get_vehicles()
@@ -11,7 +15,8 @@ defmodule FarmFleet.Dispatcher do
       end)
       |> Enum.filter(fn {_pid, state} ->
         state.status == :idle &&
-          state.battery > 20
+        state.battery > 20 &&
+        can_perform?(state, task)
       end)
       |> Enum.min_by(
         fn {_pid, state} ->
