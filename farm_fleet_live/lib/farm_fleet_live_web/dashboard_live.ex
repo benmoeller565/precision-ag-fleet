@@ -41,66 +41,179 @@ defmodule FarmFleetLiveWeb.DashboardLive do
   end
 
   @impl true
+  def handle_event("random_task", _, socket) do
+    task =
+      %FarmFleetLive.Task{
+        id: System.unique_integer([:positive]),
+        field_id: 1,
+        type: Enum.random([:plow, :spray, :survey]),
+        location: {
+          Enum.random(1..20),
+          Enum.random(1..20)
+        }
+      }
+
+    FarmFleetLive.Dispatcher.assign_task(task)
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="p-8">
-      <h1 class="text-3xl font-bold mb-6">
-        Fleet Dashboard
+
+      <h1 class="text-4xl font-bold mb-2">
+        Precision Agriculture Fleet Simulation
       </h1>
 
-      <table class="table-auto border-collapse border border-gray-500 w-full">
+      <p class="mb-6">
+        CSC 461 Final Project
+      </p>
+
+      <div class="mb-6">
+        <button
+          phx-click="random_task"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          Assign Random Task
+        </button>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 mb-8">
+
+        <div class="bg-blue-700 text-white p-4 rounded">
+          <div>Total Vehicles</div>
+          <div class="text-3xl font-bold">
+            <%= length(@vehicles) %>
+          </div>
+        </div>
+
+        <div class="bg-green-700 text-white p-4 rounded">
+          <div>Working</div>
+          <div class="text-3xl font-bold">
+            <%= Enum.count(@vehicles, &(&1.status == :working)) %>
+          </div>
+        </div>
+
+        <div class="bg-yellow-600 text-white p-4 rounded">
+          <div>Idle</div>
+          <div class="text-3xl font-bold">
+            <%= Enum.count(@vehicles, &(&1.status == :idle)) %>
+          </div>
+        </div>
+
+        <div class="bg-red-700 text-white p-4 rounded">
+          <div>Low Battery</div>
+          <div class="text-3xl font-bold">
+            <%= Enum.count(@vehicles, &(&1.battery < 20)) %>
+          </div>
+        </div>
+
+      </div>
+
+      <table class="table-auto border-collapse border border-gray-600 w-full">
+
         <thead>
-          <tr class="bg-gray-700">
-            <th class="border px-4 py-2">ID</th>
-            <th class="border px-4 py-2">Type</th>
-            <th class="border px-4 py-2">Battery</th>
-            <th class="border px-4 py-2">Status</th>
-            <th class="border px-4 py-2">Position</th>
-            <th class="border px-4 py-2">Task</th>
-            <th class="border px-4 py-2">Capabilities</th>
-            <th class="border px-4 py-2">Actions</th>
+          <tr class="bg-gray-800 text-white">
+            <th class="border p-3">ID</th>
+            <th class="border p-3">Type</th>
+            <th class="border p-3">Battery</th>
+            <th class="border p-3">Status</th>
+            <th class="border p-3">Position</th>
+            <th class="border p-3">Task</th>
+            <th class="border p-3">Capabilities</th>
+            <th class="border p-3">Actions</th>
           </tr>
         </thead>
 
         <tbody>
           <%= for vehicle <- @vehicles do %>
-            <tr>
-              <td class="border px-4 py-2"><%= vehicle.id %></td>
-              <td class="border px-4 py-2"><%= vehicle.type %></td>
-              <td class="border px-4 py-2"><%= vehicle.battery %></td>
-              <td class="border px-4 py-2"><%= vehicle.status %></td>
 
-              <td class="border px-4 py-2">
+            <tr>
+
+              <td class="border p-3">
+                <%= vehicle.id %>
+              </td>
+
+              <td class="border p-3">
+                <%= vehicle.type %>
+              </td>
+
+              <td class="border p-3">
+
+                <%= if vehicle.battery < 20 do %>
+                  <span class="text-red-500 font-bold">
+                    <%= vehicle.battery %>
+                  </span>
+                <% else %>
+                  <%= vehicle.battery %>
+                <% end %>
+
+              </td>
+
+              <td class="border p-3">
+
+                <%= case vehicle.status do %>
+
+                  <% :working -> %>
+                    <span class="text-yellow-400 font-bold">
+                      WORKING
+                    </span>
+
+                  <% :idle -> %>
+                    <span class="text-green-400 font-bold">
+                      IDLE
+                    </span>
+
+                  <% _ -> %>
+                    <%= vehicle.status %>
+
+                <% end %>
+
+              </td>
+
+              <td class="border p-3">
                 <%= inspect(vehicle.position) %>
               </td>
 
-              <td class="border px-4 py-2">
+              <td class="border p-3">
+
                 <%= if vehicle.current_task do %>
-                  <%= inspect(vehicle.current_task) %>
+                  <%= vehicle.current_task.type %>
                 <% else %>
                   none
                 <% end %>
+
               </td>
 
-              <td class="border px-4 py-2">
+              <td class="border p-3">
+
                 <%= vehicle.capabilities
-                    |> Enum.map(&to_string/1)
-                    |> Enum.join(", ") %>
+                |> Enum.map(&to_string/1)
+                |> Enum.join(", ") %>
+
               </td>
 
-              <td class="border px-4 py-2">
+              <td class="border p-3">
+
                 <button
-                  class="bg-red-600 text-white px-3 py-1 rounded"
                   phx-click="crash"
                   phx-value-id={vehicle.id}
+                  class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
                 >
                   Crash
                 </button>
+
               </td>
+
             </tr>
+
           <% end %>
         </tbody>
+
       </table>
+
     </div>
     """
   end

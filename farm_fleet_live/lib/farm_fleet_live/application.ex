@@ -24,23 +24,7 @@ defmodule FarmFleetLive.Application do
     opts = [strategy: :one_for_one, name: FarmFleetLive.Supervisor]
     {:ok, pid} = Supervisor.start_link(children, opts)
 
-    FarmFleetLive.VehicleSupervisor.start_vehicle(
-      id: 1,
-      type: :tractor,
-      capabilities: [:plow, :seed]
-    )
-
-    FarmFleetLive.VehicleSupervisor.start_vehicle(
-      id: 2,
-      type: :sprayer,
-      capabilities: [:spray]
-    )
-
-    FarmFleetLive.VehicleSupervisor.start_vehicle(
-      id: 3,
-      type: :drone,
-      capabilities: [:survey, :spray]
-    )
+    FarmFleetLive.DemoRunner.start_demo()
 
     {:ok, pid}
   end
